@@ -25,6 +25,7 @@ logging:
     org.mongodb.driver: WARN
     org.mongodb.driver.cluster: WARN
     org.mongodb.driver.connection: WARN
+    com.analysis.service.LiveDataService: DEBUG
 
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
@@ -52,3 +53,14 @@ resilience4j:
 
 
 rungrowaccesskeyinsertor: false
+
+analysis:
+  bullish:
+    min-score: 3
+    min-day-change-perc: 0.8
+    scheduler-enabled: false
+    refresh-ms: 300000
+    initial-delay-ms: 10000
+    market-start-time: "09:15"
+    market-end-time: "16:00"
+    market-time-zone: "Asia/Kolkata"

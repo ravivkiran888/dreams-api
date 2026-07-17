@@ -19,6 +19,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.analysis.constants.Constants;
 import com.analysis.dto.CandleResponseDTO;
+import com.analysis.dto.LiveDataResponseDTO;
 import com.analysis.service.GrowAccessTokenService;
 
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
@@ -78,6 +79,23 @@ public class GrowAPIClient {
 
         return executeGetRequest(url, CandleResponseDTO.class);
     }
+
+    @CircuitBreaker(name = "growwApi", fallbackMethod = "liveDataFallback")
+    public LiveDataResponseDTO getLiveData(String tradingSymbol) {
+
+        Constants.RATE_LIMITER.acquire();
+
+        String url = UriComponentsBuilder
+                .fromUriString("https://api.groww.in/v1/live-data/quote")
+            .queryParam("exchange", "NSE")
+            .queryParam("segment", "CASH")
+                .queryParam("trading_symbol", tradingSymbol)
+                .build()
+                .encode()
+                .toUriString();
+
+        return executeGetRequest(url, LiveDataResponseDTO.class);
+    }
     
     
     public String sectorFallback(String tradingSymbol, Throwable t) {
@@ -90,6 +108,12 @@ public class GrowAPIClient {
                                             Throwable t) {
         log.error("Circuit breaker triggered for candle request {} [today 09:15:00 - 17:30:00 @ {}]: {}",
                 growwSymbol, candleInterval, t.getMessage());
+        return null;
+    }
+
+    public LiveDataResponseDTO liveDataFallback(String tradingSymbol, Throwable t) {
+        log.error("Circuit breaker triggered for live data request {}: {}",
+            tradingSymbol, t.getMessage());
         return null;
     }
 
