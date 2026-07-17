@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.analysis.documents.SectorIndices;
 import com.analysis.dto.SectorIndicatorDTO;
-import com.analysis.service.SectorIndicatorService;
 import com.analysis.service.SectorProcessingService;
 
 import lombok.RequiredArgsConstructor;

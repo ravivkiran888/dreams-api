@@ -30,7 +30,7 @@ public class ScripMasterController {
         
         try {
             log.debug("Fetching all scrip volumes from service...");
-            List<ScripVolumeDataDTO> volumes = scripVolumeService.getAllScripVolumes();
+            List<SimplifiedVolumeDataDTO> volumes = scripVolumeService.getAllScripVolumes();
             
             long duration = System.currentTimeMillis() - startTime;
             log.info("Successfully fetched {} scrip volumes in {} ms", volumes.size(), duration);

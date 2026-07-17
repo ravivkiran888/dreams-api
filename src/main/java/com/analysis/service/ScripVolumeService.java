@@ -2,7 +2,6 @@ package com.analysis.service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -35,7 +34,7 @@ public class ScripVolumeService {
         log.info("=============== Starting getAllScripVolumes processing ===============");
         long processStartTime = System.currentTimeMillis();
         
-        List<ScripMaster> allScripMasters = scripMasterService.getAllScripMasters();
+        List<ScripMaster> allScripMasters = scripMasterService.getAllScripMasters().stream().limit(30).toList(); // Limit to 30 for testing; remove limit in production
         
         List<SimplifiedVolumeDataDTO> results = new ArrayList<>();
         int successCount = 0;
@@ -138,15 +137,22 @@ public class ScripVolumeService {
                 log.warn("[NO CANDLE] Symbol: {} | No candle data available", symbol);
                 return null;
             }
+
+                double avgPreviousFiveVolume = scripVolumeDataHelper.getAveragePreviousFiveVolume(candleResponse);
             
             SimplifiedVolumeDataDTO response = new SimplifiedVolumeDataDTO(
                     symbol,
                     scripMaster.getSector(),
                     latestCandle.getVolume(),
-                    latestCandle.getTimestamp()
+                    avgPreviousFiveVolume,
+                    latestCandle.getTimestamp(),
+                    latestCandle.getOpenPrice(),
+                    latestCandle.getHighPrice(),
+                    latestCandle.getLowPrice(),
+                    latestCandle.getClosePrice()
             );
-            log.info("[SUCCESS] Symbol: {} | Volume: {} | Timestamp: {}", 
-                    symbol, latestCandle.getVolume(), latestCandle.getTimestamp());
+                log.info("[SUCCESS] Symbol: {} | Volume: {} | Avg Prev 5 Volume: {} | Timestamp: {}", 
+                    symbol, latestCandle.getVolume(), avgPreviousFiveVolume, latestCandle.getTimestamp());
             return response;
             
         } catch (Exception e) {
