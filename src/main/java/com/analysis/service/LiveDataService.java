@@ -1,6 +1,7 @@
 package com.analysis.service;
 
 import java.util.ArrayList;
+import java.time.Instant;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -35,15 +36,27 @@ public class LiveDataService {
         }
 
         List<BullishSignalDTO> response = snapshots.stream()
-                .map(BullishSignalSnapshot::getBullishSignal)
-        .filter(java.util.Objects::nonNull)
-        .filter(signal -> signal.getBullishScore() != null && signal.getBullishScore() >= minBullishScore)
+                .map(this::toBullishSignalResponse)
+                .filter(java.util.Objects::nonNull)
+                .filter(signal -> signal.getBullishScore() != null && signal.getBullishScore() >= minBullishScore)
                 .toList();
 
-    log.info("Serving {} bullish signals from Mongo per-symbol snapshots using minScore {}",
-        response.size(),
-        minBullishScore);
+        log.info("Serving {} bullish signals from Mongo per-symbol snapshots using minScore {}",
+                response.size(),
+                minBullishScore);
         return response;
+    }
+
+    private BullishSignalDTO toBullishSignalResponse(BullishSignalSnapshot snapshot) {
+        if (snapshot == null || snapshot.getBullishSignal() == null) {
+            return null;
+        }
+
+        BullishSignalDTO signal = snapshot.getBullishSignal();
+        if (signal.getRefreshedAt() == null) {
+            signal.setRefreshedAt(snapshot.getRefreshedAt());
+        }
+        return signal;
     }
 
 }

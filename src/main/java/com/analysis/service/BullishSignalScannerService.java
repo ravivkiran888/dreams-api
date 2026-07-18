@@ -190,6 +190,9 @@ public class BullishSignalScannerService {
                          String scanStatus,
                          String scanError) {
         Instant refreshedAt = Instant.now();
+        if (bullishSignal != null) {
+            bullishSignal.setRefreshedAt(refreshedAt);
+        }
         Query query = Query.query(Criteria.where("_id").is(symbol));
         Update update = new Update()
                 .set("symbol", symbol)
@@ -274,26 +277,26 @@ public class BullishSignalScannerService {
         bullishScore += volumeCandleSignal ? 1 : 0;
         bullishScore = Math.min(bullishScore, MAX_BULLISH_SCORE);
 
-        return new BullishSignalDTO(
-                symbol,
-                sector,
-                bullishScore,
-                dayChangePerc,
-                lastPrice,
-                averagePrice,
-                payload.getVolume(),
-                totalBuyQuantity,
-                totalSellQuantity,
-                bidQuantity,
-                offerQuantity,
-                depthBuyQuantity,
-                depthSellQuantity,
-                momentumSignal,
-                priceStrengthSignal,
-                demandSignal,
-                depthSignal,
-                volumeCandleSignal
-        );
+        return BullishSignalDTO.builder()
+            .symbol(symbol)
+            .sector(sector)
+            .bullishScore(bullishScore)
+            .dayChangePerc(dayChangePerc)
+            .lastPrice(lastPrice)
+            .averagePrice(averagePrice)
+            .volume(payload.getVolume())
+            .totalBuyQuantity(totalBuyQuantity)
+            .totalSellQuantity(totalSellQuantity)
+            .bidQuantity(bidQuantity)
+            .offerQuantity(offerQuantity)
+            .depthBuyQuantity(depthBuyQuantity)
+            .depthSellQuantity(depthSellQuantity)
+            .momentumSignal(momentumSignal)
+            .priceStrengthSignal(priceStrengthSignal)
+            .demandSignal(demandSignal)
+            .depthSignal(depthSignal)
+            .volumeCandleSignal(volumeCandleSignal)
+            .build();
     }
 
     private long sumDepthQuantity(LiveDataDepthDTO depth, boolean isBuySide) {
