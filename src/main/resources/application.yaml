@@ -56,11 +56,11 @@ rungrowaccesskeyinsertor: false
 
 analysis:
   bullish:
-    min-score: 3
-    min-day-change-perc: 0.8
-    scheduler-enabled: false
+    min-score: 2
+    min-day-change-perc: 0.5
+    scheduler-enabled: true
     refresh-ms: 300000
     initial-delay-ms: 10000
-    market-start-time: "09:15"
-    market-end-time: "16:00"
+    market-start-time: "05:15"
+    market-end-time: "23:00"
     market-time-zone: "Asia/Kolkata"

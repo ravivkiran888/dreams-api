@@ -90,9 +90,7 @@ public class BullishSignalScannerService {
         ZoneId zoneId = ZoneId.of(marketTimeZone);
         ZonedDateTime now = ZonedDateTime.now(zoneId);
         DayOfWeek dayOfWeek = now.getDayOfWeek();
-        if (dayOfWeek == DayOfWeek.SATURDAY || dayOfWeek == DayOfWeek.SUNDAY) {
-            return false;
-        }
+       
 
         LocalTime start = LocalTime.parse(marketStartTime);
         LocalTime end = LocalTime.parse(marketEndTime);
@@ -102,6 +100,7 @@ public class BullishSignalScannerService {
     }
 
     public void runFullScanAndUpsert() {
+        Instant refreshedAt = Instant.now();
         List<ScripMaster> allScripMasters = scripMasterService.getAllScripMasters();
         int skippedEmptySymbols = 0;
         int nullPayloadUpserts = 0;
@@ -134,7 +133,8 @@ public class BullishSignalScannerService {
                             null,
                             null,
                             "NO_LIVE_DATA",
-                            "Live data response or payload was null"
+                            "Live data response or payload was null",
+                            refreshedAt
                     );
                     continue;
                 }
@@ -154,7 +154,8 @@ public class BullishSignalScannerService {
             candleResponse,
             bullishSignal,
             "SUCCESS",
-            null
+            null,
+            refreshedAt
         );
         successUpserts++;
             } catch (Exception e) {
@@ -167,7 +168,8 @@ public class BullishSignalScannerService {
             null,
             null,
             "API_FAILURE",
-            e.getMessage()
+            e.getMessage(),
+            refreshedAt
         );
         failureUpserts++;
             }
@@ -188,8 +190,8 @@ public class BullishSignalScannerService {
                                              CandleResponseDTO candleResponse,
                          BullishSignalDTO bullishSignal,
                          String scanStatus,
-                         String scanError) {
-        Instant refreshedAt = Instant.now();
+                         String scanError,
+                         Instant refreshedAt) {
         if (bullishSignal != null) {
             bullishSignal.setRefreshedAt(refreshedAt);
         }
@@ -240,8 +242,7 @@ public class BullishSignalScannerService {
      * 1) Momentum: dayChangePerc > configured minDayChangePerc.
      * 2) Price strength: lastPrice > averagePrice.
      * 3) Demand pressure: totalBuyQuantity > totalSellQuantity and bidQuantity > offerQuantity.
-     * 4) Order book depth: summed buy depth quantity > summed sell depth quantity.
-     * 5) Candle-volume confirmation: current candle volume is significant (helper-based check).
+     * 4) Candle-volume confirmation: current candle volume is significant (helper-based check).
      *
      * Scoring and selection:
      * - Each true filter contributes +1 to bullishScore.
@@ -259,21 +260,16 @@ public class BullishSignalScannerService {
         Long bidQuantity = payload.getBidQuantity();
         Long offerQuantity = payload.getOfferQuantity();
 
-        long depthBuyQuantity = sumDepthQuantity(payload.getDepth(), true);
-        long depthSellQuantity = sumDepthQuantity(payload.getDepth(), false);
-
         boolean momentumSignal = isGreaterThan(dayChangePerc, minDayChangePerc);
         boolean priceStrengthSignal = isGreaterThan(lastPrice, averagePrice);
         boolean demandSignal = isGreaterThan(totalBuyQuantity, totalSellQuantity)
                 && isGreaterThan(bidQuantity, offerQuantity);
-        boolean depthSignal = depthBuyQuantity > depthSellQuantity;
         boolean volumeCandleSignal = scripVolumeDataHelper.hasSignificantCurrentVolume(candleResponse);
 
         int bullishScore = 0;
         bullishScore += momentumSignal ? 1 : 0;
         bullishScore += priceStrengthSignal ? 1 : 0;
         bullishScore += demandSignal ? 1 : 0;
-        bullishScore += depthSignal ? 1 : 0;
         bullishScore += volumeCandleSignal ? 1 : 0;
         bullishScore = Math.min(bullishScore, MAX_BULLISH_SCORE);
 
@@ -289,12 +285,9 @@ public class BullishSignalScannerService {
             .totalSellQuantity(totalSellQuantity)
             .bidQuantity(bidQuantity)
             .offerQuantity(offerQuantity)
-            .depthBuyQuantity(depthBuyQuantity)
-            .depthSellQuantity(depthSellQuantity)
             .momentumSignal(momentumSignal)
             .priceStrengthSignal(priceStrengthSignal)
             .demandSignal(demandSignal)
-            .depthSignal(depthSignal)
             .volumeCandleSignal(volumeCandleSignal)
             .build();
     }

@@ -40,4 +40,7 @@ public class SimplifiedVolumeDataDTO {
 
     @JsonProperty("LatestClosePrice")
     private BigDecimal latestClosePrice;
+
+    @JsonProperty("DayChange")
+    private BigDecimal dayChange;
 }

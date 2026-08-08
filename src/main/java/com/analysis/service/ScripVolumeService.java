@@ -1,5 +1,6 @@
 package com.analysis.service;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -84,6 +85,12 @@ public class ScripVolumeService {
 
         double avgPreviousFiveVolume = scripVolumeDataHelper.getAveragePreviousFiveVolume(snapshot.getCandleResponse());
 
+        BigDecimal dayChange = null;
+        if (snapshot.getLiveDataResponse() != null
+                && snapshot.getLiveDataResponse().getPayload() != null) {
+            dayChange = snapshot.getLiveDataResponse().getPayload().getDayChange();
+        }
+
         return new SimplifiedVolumeDataDTO(
                 snapshot.getSymbol(),
                 snapshot.getSector(),
@@ -93,7 +100,8 @@ public class ScripVolumeService {
                 latestCandle.getOpenPrice(),
                 latestCandle.getHighPrice(),
                 latestCandle.getLowPrice(),
-                latestCandle.getClosePrice()
+                latestCandle.getClosePrice(),
+                dayChange
         );
     }
 

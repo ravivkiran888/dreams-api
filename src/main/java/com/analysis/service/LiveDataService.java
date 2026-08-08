@@ -23,7 +23,7 @@ public class LiveDataService {
 
     private final MongoTemplate mongoTemplate;
 
-    @Value("${analysis.bullish.min-score:4}")
+    @Value("${analysis.bullish.min-score:2}")
     private int minBullishScore;
 
     public List<BullishSignalDTO> getBullishSignals() {
