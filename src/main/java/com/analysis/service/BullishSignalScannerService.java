@@ -241,11 +241,13 @@ public class BullishSignalScannerService {
      * Filter logic:
      * 1) Momentum: dayChangePerc > configured minDayChangePerc.
      * 2) Price strength: lastPrice > averagePrice.
-     * 3) Demand pressure: totalBuyQuantity > totalSellQuantity and bidQuantity > offerQuantity.
-     * 4) Candle-volume confirmation: current candle volume is significant (helper-based check).
+     * 3) Demand: totalBuyQuantity > totalSellQuantity.
+     * 4) Depth pressure: bidQuantity > offerQuantity.
+     * 5) Candle-volume confirmation: current candle volume is significant (helper-based check).
      *
      * Scoring and selection:
-     * - Each true filter contributes +1 to bullishScore.
+     * - Each true filter contributes +1 to bullishScore (demand and depth pressure are scored
+     *   independently rather than AND'd together, so a stock can earn partial credit for either).
      * - Maximum score is MAX_BULLISH_SCORE.
      */
     private BullishSignalDTO buildBullishSignal(String symbol,
@@ -262,14 +264,15 @@ public class BullishSignalScannerService {
 
         boolean momentumSignal = isGreaterThan(dayChangePerc, minDayChangePerc);
         boolean priceStrengthSignal = isGreaterThan(lastPrice, averagePrice);
-        boolean demandSignal = isGreaterThan(totalBuyQuantity, totalSellQuantity)
-                && isGreaterThan(bidQuantity, offerQuantity);
+        boolean demandSignal = isGreaterThan(totalBuyQuantity, totalSellQuantity);
+        boolean depthSignal = isGreaterThan(bidQuantity, offerQuantity);
         boolean volumeCandleSignal = scripVolumeDataHelper.hasSignificantCurrentVolume(candleResponse);
 
         int bullishScore = 0;
         bullishScore += momentumSignal ? 1 : 0;
         bullishScore += priceStrengthSignal ? 1 : 0;
         bullishScore += demandSignal ? 1 : 0;
+        bullishScore += depthSignal ? 1 : 0;
         bullishScore += volumeCandleSignal ? 1 : 0;
         bullishScore = Math.min(bullishScore, MAX_BULLISH_SCORE);
 
@@ -288,6 +291,7 @@ public class BullishSignalScannerService {
             .momentumSignal(momentumSignal)
             .priceStrengthSignal(priceStrengthSignal)
             .demandSignal(demandSignal)
+            .depthSignal(depthSignal)
             .volumeCandleSignal(volumeCandleSignal)
             .build();
     }
